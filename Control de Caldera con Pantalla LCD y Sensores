@@ -1,0 +1,224 @@
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd1(0x27,16,2); 
+ LiquidCrystal_I2C lcd2(0x25,16,2);
+LiquidCrystal_I2C lcd3(0x24,16,2); //LCD 0X24 Temperatura Hogar de Caldera       Canal (A0) lcd3
+LiquidCrystal_I2C lcd4(0x23,16,2); 
+
+
+
+#define VREF 5000L // ADC's reference voltage on your Arduino,typical value:5000mV
+//******************************************************************************************
+/*     
+  Boole
+  Función AND con 2 variables
+  Creado por Jacob Muñoz Arce
+  10/10/2022 ; Hora 17:53
+  Control de Nivel de Agua Caldera
+ */
+int var1 = 14;       //Pin de entrada del pulsador 1   PARTIR
+int var2 = 7;       //Pin de entrada del pulsador 2   PARAR
+int led = 16;       //Pin de salida para el led(rojo) SALIDA
+int estado1 = 0;    //Para almacenar el estado de la variable1 PARTIR
+int estado2 = 0;    //Para almacenar el estado de la variable2 PARAR
+int resultado=0;  //Para almacenar el resultado  
+
+int A=10;         // CONTROLA LA VALVULA DE SELENOIDE DE SEGURIDAD SI ES MAYOR DE LA PRESION
+                  //   SETEADA DE ABRE.     
+                 
+//**************** TEMPERATURA DEL AGUA DE CALDERA *************************   
+                   //LiquidCrystal_I2C lcd4(0x23,16,2);               
+int X1_Temperatura = 0.0; // Rango Intefrior 
+int X2_Temperatura =200.0; // Rango Superio
+int Y1_Temperatura = 0;//Voltaje
+int Y2_Temperatura = 5.0;//Voltaje
+ 
+//**************** PRESION INTERIOR CALDERA *************************
+                   //LiquidCrystal_I2C lcd1(0x27,16,2); 
+long presion;
+int X1_Presion = 0.0; // Rango Intefrior 
+int X2_Presion =100.0; // Rango Superio
+int Y1_Presion = 0.0;//Voltaje
+int Y2_Presion = 5.0;//Voltaje
+int fan=8; // ping donde se actuara valvula de seguridad.
+int AP =5;// Valvula selenoide a controlar sistema de seguridad de Sobre presion de Caldera.
+
+//**************** TEMPERATURA DEL HOGAR DE CALDERA *************************   
+                   //LiquidCrystal_I2C lcd4(0x23,16,2);               
+int X1_Temperatura0 = 0.0; // Rango Intefrior 
+int X2_Temperatura0 =400.0; // Rango Superio
+int Y1_Temperatura0 = 0;//Voltaje
+int Y2_Temperatura0 = 5.0;//Voltaje
+ //****************PARIR/ para el Bomba**********
+const int buttonPin = 5;     // the number of the pushbutton pin
+const int ledPin =  15;      // the number of the LED pin
+
+// variables will change:
+int buttonState = 0;         // variable for reading the pushbutton status
+
+
+//**************SALIDA PARA CONTROLAR EL NIVEL Integrado CI 7408 con los Led fabricado con un Rotametro
+const int buttonPin2 = 9;     // the number of the pushbutton pin
+const int ledPin2 =  14;      // the number of the LED pin
+
+// variables will change:
+int buttonState2 = 0;         // variable for reading the pushbutton status
+//Salida digital Dpara la indicacion de nivel de caldera
+//********************************************************
+
+void setup(){                                                        
+                                                                    
+  Serial.begin(9600);                                               
+
+  // Inicializamos el objeto LCD  lcd1 LCD  0X27 Presion Interior Caldera   Canal (A2)                            
+   lcd1.init();  
+   lcd2.init(); 
+   lcd3.init();  // Inicializamos el objeto LCD 0X24 Temperatura Hogar de Caldera       Canal (A0) lcd3     
+   lcd4.init();                                              
+  //Encendemos la luz de fondo.                                    
+  lcd1.backlight();                     
+  lcd2.backlight();
+  lcd3.backlight();      
+  lcd4.backlight();       
+ 
+ //*********************Control de Nivel de Agua Caldera*************
+pinMode(var1, INPUT);     //Iniciliza el pin de entrada 1 como salida
+  pinMode(var2, INPUT);     //Iniciliza el pin de entrada 2 como salida 
+  pinMode (estado1,INPUT);
+   pinMode (estado2,INPUT);
+  pinMode(led, OUTPUT);     //Iniciliza el pin del led como salida
+
+  
+  //*********************Control de Valvula de Seguridad de presion *************
+  pinMode(A, OUTPUT);     // CONTROLA LA VALVULA DE SELENOIDE DE SEGURIDAD SI ES MAYOR DE LA PRESION
+                         //   SETEADA DE ABRE. 
+ //****************Control de Nivel*******// para el Bomba**********                       
+ // initialize the LED pin as an output:
+  pinMode(ledPin, OUTPUT);
+  // initialize the pushbutton pin as an input:
+  pinMode(buttonPin, INPUT);                        
+} 
+
+void loop() {
+     //****************Control Nivel de Agua**************************
+  estado1 = digitalRead(var1);  //Lee el estado del botón y lo almacena9
+  estado2 = digitalRead(var2);  //Lee el estado del botón y lo almacena
+  resultado = (estado1 && estado2); //Función AND con los dos estados
+  digitalWrite (led,resultado);
+ 
+  if (var1=LOW) 
+     {
+      digitalWrite(var1,LOW);
+      }
+      else{
+      digitalWrite (var1,HIGH);
+}
+  
+  //******** Presion *** (LCD 1 0X27) Canal A2 *******************************
+ int ValorSensor2 = analogRead (A2);
+float voltaje2 = (ValorSensor2)*(5.0/1023.0);
+float Span_Presion = ((X2_Presion)-(X1_Presion));
+float M2 =((Y2_Presion-(Y1_Presion))/(X2_Presion-(X1_Presion))); // Pendiente
+float Y2 = (Y2_Presion-(Y1_Presion)); //
+float PV2 = (Span_Presion/ Y2 )*(voltaje2 );
+
+            lcd1.setCursor(0,0);
+            lcd1.print(voltaje2);
+            lcd1.setCursor(5,0);
+            lcd1.print("PRESION "); 
+            lcd1.setCursor(5,1);
+            lcd1.print(PV2,2);
+            lcd1.print(" Psi"); 
+     if (PV2 >AP) 
+     {
+      digitalWrite(A,LOW);
+      }
+      else{
+      digitalWrite (A,HIGH);
+}
+Serial.println("voltaje2");
+Serial.println(voltaje2);
+Serial.println("Presion Psi");
+Serial.println (PV2,2);
+delay (100);
+
+
+   // 0X24   TEMPERATURA HOGAR CALDERA
+    int ValorSensor0 = analogRead (A0);
+              float voltaje0 = (ValorSensor0)*(Y2_Temperatura0/1023.0);
+              float Span_Temperatura0 = ((X2_Temperatura0)-(X1_Temperatura0));
+float M0 =((Y2_Temperatura0-(Y1_Temperatura0))/(X2_Temperatura0-(X1_Temperatura0))); // Pendiente
+float Y0 = (Y2_Temperatura0-(Y1_Temperatura0)); //
+float PV0 = (Span_Temperatura0/ Y0 )*(voltaje0 );
+           lcd3.setCursor(0,0);
+           lcd3.print(voltaje0);
+           lcd3.setCursor(5,0);
+           lcd3.print("T\337 HOGAR "); 
+           lcd3.setCursor(5,1);
+           lcd3.print(PV0,2);
+           lcd3.print(" \337C"); //  codigo de sinbolo de ªC 
+Serial.println("voltaje0");
+Serial.println(voltaje0);
+Serial.println("Temperatura0 ªC");
+Serial.println (PV0,2);
+delay (100);
+
+
+
+
+  // 0X23   TEMPERATURA HOGAR CALDERA
+    int ValorSensor = analogRead (A1);
+              float voltaje = (ValorSensor)*(Y2_Temperatura/1023.0);
+              float Span_Temperatura = ((X2_Temperatura)-(X1_Temperatura));
+float M =((Y2_Temperatura-(Y1_Temperatura))/(X2_Temperatura-(X1_Temperatura))); // Pendiente
+float Y = (Y2_Temperatura-(Y1_Temperatura)); //
+float PV = (Span_Temperatura/ Y )*(voltaje );
+           lcd4.setCursor(0,0);
+           lcd4.print(voltaje);
+           lcd4.setCursor(5,0);
+           lcd4.print("T\337 AGUA "); 
+           lcd4.setCursor(5,1);
+           lcd4.print(PV,2);
+           lcd4.print(" \337C"); //  codigo de sinbolo de ªC 
+Serial.println("voltaje0");
+Serial.println(voltaje);
+Serial.println("Temperatura0 ªC");
+Serial.println (PV,2);
+delay (100);
+          
+//*********** PARTIR/PARA Bomba  
+   // read the state of the pushbutton value:
+  buttonState = digitalRead(buttonPin);
+
+  // check if the pushbutton is pressed. If it is, the buttonState is HIGH:
+  if (buttonState == HIGH) {
+    // turn LED on:
+    digitalWrite(ledPin,HIGH);
+  } else {
+    // turn LED off:
+    digitalWrite(ledPin, LOW);
+  }             
+//*****************mensaje del display libre ******************************
+ lcd2.setCursor(0,0);
+          
+           lcd2.setCursor(5,0);
+           lcd2.print("Proyecto "); 
+           lcd2.setCursor(0,1);
+           lcd2.print("GENERADOR VAPOR");
+
+
+
+//*********** control de Nivel Control de Bomba  
+   // read the state of the pushbutton value:
+  buttonState2 = digitalRead(buttonPin2);
+
+  // check if the pushbutton is pressed. If it is, the buttonState is HIGH:
+  if (buttonState2 == HIGH) {
+    // turn LED on:
+    digitalWrite(ledPin2,HIGH);
+  } else {
+    // turn LED off:
+    digitalWrite(ledPin2, LOW);
+  }  
+  //********************************           
+}
