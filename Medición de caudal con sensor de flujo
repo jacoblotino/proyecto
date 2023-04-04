@@ -1,0 +1,55 @@
+
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
+
+volatile int Contador; //variable que cuenta los pulsos
+int PinSensor = 2;    // pin donde se conecta  el sensor
+float Caudal = Caudal;
+float frecuencia = frecuencia;
+
+
+// función a ejecutarse en cada interrupción
+void pulso ()
+{
+  Contador++;
+}
+
+long funcion(void)
+{
+  long cantidad;
+  Contador = 0;
+    
+  interrupts();
+  delay(800);  //Se inician las interrupciones y se cuentan los pulsos
+  noInterrupts();//se suspenden las interrupciones
+  
+  cantidad=10*Contador; // pulsos por segundo
+  return cantidad;
+}
+LiquidCrystal_I2C lcd(0x27,16,2);
+void setup()
+{
+  Serial.begin(9600);
+  pinMode(PinSensor, INPUT);
+  attachInterrupt(0,pulso,RISING); // inicializamos las interupciones 
+
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(0, 0);
+ lcd.print(Caudal); // Prints string "Distance" on the LCD
+   
+}
+
+void loop ()  
+{
+  
+ frecuencia=funcion(); //frecuencia de los pulsos
+
+ Caudal=frecuencia/7.5; //calculamos el caudal en L/m
+
+ 
+ Serial.print ("Flujo: ");
+ Serial.println (Caudal);
+
+ 
+}
