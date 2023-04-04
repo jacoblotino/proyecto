@@ -1,0 +1,62 @@
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd1(0x27,16,2); 
+ LiquidCrystal_I2C lcd2(0x25,16,2);
+LiquidCrystal_I2C lcd3(0x24,16,2); 
+LiquidCrystal_I2C lcd4(0x23,16,2); 
+void setup(){ 
+
+  Serial.begin(9600);
+  
+  // Inicializamos el DISPLAY2   LCD 1 0X20 PRESION
+  
+  lcd1.init();
+  //Encendemos la luz de fondo.
+  lcd1.backlight();
+
+ 
+  // Inicializamos el DISPLAY2   0X23 TENPERATURA
+   
+  lcd2.init();
+  //Encendemos la luz de fondo.
+  lcd2.backlight();
+
+
+// Inicializamos el DISPLAY2   0X23 TENPERATURA
+  // Inicializamos el objeto lcd 3
+  lcd3.init();
+  //Encendemos la luz de fondo.
+  lcd3.backlight();
+
+
+ 
+  // Inicializamos el DISPLAY 4 0X27 FLUJO
+  lcd4.init();
+  //Encendemos la luz de fondo.
+  lcd4.backlight();
+
+}
+void loop() {
+//   LCD 1 0X20 PRESION
+ lcd1.setCursor(0, 0);
+ lcd1.println("LCD1 0X27 PRESION");
+  Serial.println("LCD 1 PRESION 0X27");
+  
+//  LCD 2 0X23 TEMPERATURA
+ lcd2.setCursor(0, 0);
+  lcd2.println("LCD2 TEM.0X25");
+ Serial.println("LCD2 TEMPERATURA 0X25");
+ 
+//    LCD 3  NIVEL 0X26
+ lcd3.setCursor(0, 0);
+   lcd3.println("LCD3 NIVEL 0X24");
+Serial.println("LCD 3 NIVEL 0X24");
+
+//    LCD 4 0X27 FLUJO
+ lcd4.setCursor(0, 0);
+   lcd4.println("LCD4 FLUJO 0X23");
+Serial.println("LCD 4 FLUJO 0X23");
+
+delay (10000 );
+
+}
